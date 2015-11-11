@@ -1,25 +1,53 @@
 from django.test import TestCase, Client
-from .models import User
+from django.core.urlresolvers import reverse
+from django.contrib.auth.models import User
 
 import hashlib
 
 
 class UserTest(TestCase):
+
+    login_url = reverse('account:login')
+
     def setUp(self):
         pass
 
-    def test_unknown_user(self):
-        with self.assertRaises(User.DoesNotExist):
-            User.objects.get(pk=1)
+    def test_login_invalid_json_post_data(self):
+        request = {'username':'admin', 'password':'admin'}
+        client = Client()
+        response = client.post(self.login_url, request)
 
-    def test_invalid_password(self): 
-        User.objects.create(password='1234')
+        self.assertEquals(response.status_code, 400)
 
-        with self.assertRaises(User.DoesNotExist):
-            md5 = hashlib.md5()
-            md5.update('123')
-            password = md5.hexdigest()
-            User.objects.get(pk=1, password=password)
+    def test_login_invalid_http_method(self):
+        client = Client()
+        response = client.get(self.login_url)
 
-    def test_disabled_user(self):
-        pass
+        self.assertEquals(response.status_code, 405)
+
+    def test_login_invalid_user(self):
+        request = '{"username":"user", "password":"user"}'
+        client = Client()
+        response = client.post(self.login_url, request, content_type="application/json")
+
+        self.assertEquals(response.status_code, 401)
+
+    def test_login_disabled_user(self):
+        user = User.objects.create_user('user', password='user')
+        user.is_active = False
+        user.save()
+
+        request = '{"username":"user", "password":"user"}'
+        client = Client()
+        response = client.post(self.login_url, request, content_type="application/json")
+
+        self.assertEquals(response.status_code, 401)
+
+    def test_login_valid_user(self):
+        user = User.objects.create_user('user', password='user')
+
+        request = '{"username":"user", "password":"user"}'
+        client = Client()
+        response = client.post(self.login_url, request, content_type="application/json")
+
+        self.assertEquals(response.status_code, 200)
