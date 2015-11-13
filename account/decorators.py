@@ -1,12 +1,12 @@
 import json
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
+from django.core.urlresolvers import reverse
 
 
 JSON = 'application/json'
 
 def require_json_data(func):
-
     def _dec(request, *args, **kwargs):
         try:
             json.loads(request.body)
