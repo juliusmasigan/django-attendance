@@ -12,6 +12,8 @@ from .models import Attendance
 from pytz import timezone
 
 
+JSON = "application/json"
+
 def index(request):
     pass
 
@@ -42,3 +44,14 @@ def time_out(request):
     user = authenticate(username=username, password=password)
     if user is None or not user.is_active:
         return HttpResponse(status=401)
+
+@require_http_methods(['GET'])
+def attendance_status(request):
+    users = User.objects.filter(is_active=True)
+    user_list = []
+    for user in users:
+        user_list.append(user.username)
+    attendances = Attendance.objects.filter(user__in=users)
+    print attendances
+
+    return HttpResponse(status=200, content_type=JSON)
