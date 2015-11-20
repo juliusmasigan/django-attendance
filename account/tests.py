@@ -113,13 +113,12 @@ class AccountTest(TestCase):
         with self.assertRaises(ValueError):
             content = json.loads(response.content)
 
-        self.assertListEqual(content, [{
-            'id':1, 
-            'username':self.valid_username, 
+        self.assertDictEquals(content['1'], {
+            'username':'user',
             'attendance':[{
-                'timeIn':'',
-                'timeOut':''
+                'time_in':'',
+                'time_out':''
             }]
-        }])
+        })
         self.assertEquals(response.status_code, 200)
         self.assertEquals(response.get('content-type'), "application/json")

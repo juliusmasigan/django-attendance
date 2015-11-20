@@ -47,11 +47,23 @@ def time_out(request):
 
 @require_http_methods(['GET'])
 def attendance_status(request):
-    users = User.objects.filter(is_active=True)
-    user_list = []
-    for user in users:
-        user_list.append(user.username)
-    attendances = Attendance.objects.filter(user__in=users)
-    print attendances
+    attendances = Attendance.objects.select_related('user').filter(user__is_active=True)
+    data = {}
+    for attendance in attendances:
+        if not attendance.user.id in data.keys():
+            data[attendance.user.id] = {
+                'username':attendance.user.username,
+                'attendance':[{
+                    'time_in':attendance.time_in,
+                    'time_out':attendance.time_out
+                }]
+            }
+        else:
+            data[attendance.user.id]['attendance'].append({
+                'time_in':attendance.time_in,
+                'time_out':attendance.time_out
+            })
+    
+    print data
 
     return HttpResponse(status=200, content_type=JSON)
